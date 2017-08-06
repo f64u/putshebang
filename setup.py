@@ -13,20 +13,12 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.0',
-    # TODO: put package requirements here
 ]
 
-setup_requirements = [
-    # TODO(faddyy): put setup requirements (distutils extensions, etc.) here
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
 
 setup(
     name='putshebang',
-    version='0.1.0',
+    version='0.1.2',
     description="A small tool that helps in adding the appropriate shebang",
     long_description=readme + '\n\n' + history,
     author="Fady Adel",

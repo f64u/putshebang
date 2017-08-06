@@ -60,7 +60,7 @@ Get Started!
 Ready to contribute? Here's how to set up `putshebang` for local development.
 
 1. Fork the `putshebang` repo on GitHub.
-2. Clone your fork l    ocally::
+2. Clone your fork locally::
 
     $ git clone git@github.com:your_name_here/putshebang.git
 

@@ -4,4 +4,4 @@ from putshebang.putshebang import *
 
 __author__ = """Fady Adel"""
 __email__ = '2masadel@gmail.com'
-__version__ = '0.1.0'
+__version__ = '0.1.2'
