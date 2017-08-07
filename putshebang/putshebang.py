@@ -131,12 +131,12 @@ class ShebangedFile(object):
         self.file.contents = re.sub("^\s*", '', con)
 
     @staticmethod
-    def get_potential_shebang(name):
-        sh = ShebangedFile(UnshebangedFile(name, create=True), None).shebang    # create = True? just temporary
+    def get_potential_shebang(name, lang):
+        sh = ShebangedFile(UnshebangedFile(name, create=True), lang=lang).shebang    # create = True? just temporary
         os.remove(name)
         return sh
 
 
-def shebang(file_name):
-    return ShebangedFile.get_potential_shebang(file_name)
+def shebang(file_name, lang=None):
+    return ShebangedFile.get_potential_shebang(file_name, lang)
 

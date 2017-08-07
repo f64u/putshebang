@@ -15,15 +15,9 @@ from putshebang import cli
 class TestPutshebang(unittest.TestCase):
     """Tests for `putshebang` package."""
 
-    def setUp(self):
-        """Set up test fixtures, if any."""
-        self.shebang_path = putshebang.shebang("temp.py")
-
     def test_command_line_interface(self):
+        env_path = shutil.which("env")
+        shebang = putshebang.shebang
         """Test the CLI."""
-        runner = CliRunner()
-        result = runner.invoke(cli.main)
-        assert 'putshebang.cli.main' in result.output
-        help_result = runner.invoke(cli.main, ['--help'])
-        assert '--help  Show this message and exit.' in help_result.output
-        assert check_output([shutil.which('env'), "python"]) == self.shebang_path
+        assert check_output([env_path, "python2"]).strip() == shebang("tmp.py", "python2")
+        assert check_output([env_path, "python3"]).strip() == shebang("tmp.py", "python3")
