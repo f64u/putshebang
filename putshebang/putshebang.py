@@ -2,29 +2,36 @@
 
 """Main module."""
 
+from __future__ import print_function
 import os
 import re
 import shutil
+import tempfile
+import logging
+
+logging.basicConfig(format="%(levelname)s: %(message)s")
+
+
+class _ShebangNotFoundException(Exception):
+    pass
 
 
 class UnshebangedFile(object):
     """ The file that requires the shebang. """
 
-    def __init__(self, name, create):
+    def __init__(self, name, strict):
         """
         :param name: name of the file to operate on
-        :param create: a bool the specifies the creatability
+        :param strict: a bool that specifies the creatability
         """
         self.name = name
 
         if not os.path.isfile(self.name):
-            if create:
+            if not strict:
                 self.__create()
                 self.contents = ''
-
             else:
-                print("File doesn't exist. Try using the --force option to force the script to create it for you.")
-                exit(1)
+                raise ValueError("File name doesn't exist.")
 
         else:
             with open(self.name) as f:
@@ -73,9 +80,7 @@ class ShebangedFile(object):
 
             except (IndexError, KeyError):
                 # couldn't find the extension or it doesn't exist in the dict
-                print("Couldn't guess the language from the file extension.")
-                print("please use the --lang option to specify it.")
-                exit(1)
+                raise _ShebangNotFoundException("Couldn't guess the language from the file extension.")
 
     def make_executable(self):
         mode = os.stat(self.file.name).st_mode
@@ -85,16 +90,20 @@ class ShebangedFile(object):
     def put_shebang(self, newline_count, overwrite):
         """ puts the shebang on the first line of self.file plus (newline character * newline_count)
         :param newline_count: number of '\n' appended after the shebang (int)
-        :param overwrite: overwrite if it's a broken shebang (True || False)
-        :return: void
+        :param overwrite: overwrite if it's a broken shebang (bool)
+        :return: bool specifies the success of the method
         """
 
         self.shebang += '\n' * newline_count
-        self.__check_shebang(overwrite)
+        if not self.__check_shebang(overwrite):
+            print("The script didn't modify the file..")
+            # we want to exit !
+            return False
 
         with open(self.file.name, 'w') as f:
             f.write(self.shebang)
             f.write(self.file.contents)
+        return True
 
     def print_known(self):
         print("\nExtension\tInterpreter name")
@@ -105,26 +114,29 @@ class ShebangedFile(object):
     def __check_shebang(self, overwrite):
         """ Checks if a shebang does exist and reports its state. 
         :param overwrite: overwrite if it's a broken shebang (True || False)
-        :return: void
+        :return: bool specifies whether we want to exit or not
         """
 
         con = self.file.contents  # just a rename
         if con.startswith(self.shebang):
-            print("The shebang is already there.\nExiting...")
-            exit()
+            logging.warning("The shebang is already there.")
+            return False
 
         elif con.startswith("#!"):
             if overwrite:
                 self.__remove_shebang()
+                return True
 
             else:
-                print("There's a shebang already there but it's pointing to a wrong interpreter.")
-                print("Use the option --overwrite to overwrite it.")
-                exit(1)
+                logging.warning("There's a shebang already there but it's pointing to a wrong interpreter, "
+                                "you can use the option --overwrite to overwrite it.")
+                return False
+
+        return True
 
     def __remove_shebang(self):
-        """ removes the first line of self.file plus the whitespaces.
-        :return: 
+        """ removes the first line of self.file.contents (it should be the shebang) plus the whitespaces.
+        :return: void
         """
         con = self.file.contents
         self.file.contents = con = con[con.find('\n') + 1:]
@@ -132,11 +144,16 @@ class ShebangedFile(object):
 
     @staticmethod
     def get_potential_shebang(name, lang):
-        sh = ShebangedFile(UnshebangedFile(name, create=True), lang=lang).shebang    # create = True? just temporary
-        os.remove(name)
+        tmp_dir = tempfile.gettempdir()
+        try:
+            sh = ShebangedFile(UnshebangedFile(tmp_dir + os.sep + name, False), lang=lang).shebang
+        except _ShebangNotFoundException as e:
+            logging.error(str(e))
+            sh = ''
+
         return sh
 
 
 def shebang(file_name, lang=None):
-    return ShebangedFile.get_potential_shebang(file_name, lang)
+    return ShebangedFile.get_potential_shebang(file_name, lang)[:-1]    # no new line
 

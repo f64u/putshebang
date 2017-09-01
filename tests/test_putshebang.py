@@ -19,5 +19,5 @@ class TestPutshebang(unittest.TestCase):
         env_path = shutil.which("env")
         shebang = putshebang.shebang
         """Test the CLI."""
-        assert check_output([env_path, "python2"]).strip() == shebang("tmp.py", "python2")
-        assert check_output([env_path, "python3"]).strip() == shebang("tmp.py", "python3")
+        assert "#!" + str(check_output([env_path, "python2"]).strip()) == shebang("tmp.py", "python2")
+        assert "#!" + str(check_output([env_path, "python3"]).strip()) == shebang("tmp.py", "python3")

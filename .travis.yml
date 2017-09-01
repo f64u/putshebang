@@ -3,6 +3,7 @@
 
 language: python
 python:
+  - 3.6
   - 3.5
   - 3.4
   - 3.3
@@ -26,4 +27,4 @@ deploy:
   on:
     tags: true
     repo: faddyy/putshebang
-    python: 2.7
+    python: 3.6

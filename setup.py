@@ -18,7 +18,7 @@ requirements = [
 
 setup(
     name='putshebang',
-    version='0.1.2',
+    version='0.1.3',
     description="A small tool that helps in adding the appropriate shebang",
     long_description=readme + '\n\n' + history,
     author="Fady Adel",
