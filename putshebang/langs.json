@@ -1,46 +1,34 @@
 {
-    "interpreted": {
-        "rb": [
-            "ruby"
-        ],
-        "py": [
-            "python3",
-            "python2"
-        ],
-        "sh": [
-            "bash",
-            "sh",
-            "zsh"
-        ],
-        "bash": [
-            "bash"
-        ],
-        "zsh": [
-            "zsh"
-        ],
-
-        "pl": [
-            "perl"
-        ],
-        "js": [
-            "node"
-        ],
-        "php": [
-            "php"
-        ],
-        "tcl": [
-            "tcl"
-        ],
-        "lua": [
-            "lua"
-        ]
-    },
-    "compiled": [
-        "c",
-        "cpp",
-        "vb",
-        "cs",
-        "java",
-        "rs"
+    "rb": [
+        "ruby"
+    ],
+    "py": [
+        "python"
+    ],
+    "sh": [
+        "bash",
+        "sh",
+        "zsh"
+    ],
+    "bash": [
+        "bash"
+    ],
+    "zsh": [
+        "zsh"
+    ],
+    "pl": [
+        "perl"
+    ],
+    "js": [
+        "node"
+    ],
+    "php": [
+        "php"
+    ],
+    "tcl": [
+        "tcl"
+    ],
+    "lua": [
+        "lua"
     ]
 }

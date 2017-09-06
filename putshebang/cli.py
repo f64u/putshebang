@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import click
 import sys
-from putshebang import ShebangedFile, UnshebangedFile, _ShebangNotFoundException
+from putshebang import ShebangedFile, UnshebangedFile, ShebangNotFoundException
 """Console script for shebang."""
 
 
@@ -17,7 +17,7 @@ def main(file, executable, strict, overwrite, lang, newline):
     """A small utility helps in adding the appropriate shebang to <FILE>."""
     try:
         shebanged_file = ShebangedFile(UnshebangedFile(file, strict), lang)
-    except _ShebangNotFoundException as e:
+    except Exception as e:
         print("Error: " + str(e))
         sys.exit(1)
 
