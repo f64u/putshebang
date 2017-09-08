@@ -7,6 +7,6 @@ from .main import ShebangedFile, UnshebangedFile, shebang, ShebangNotFoundExcept
 __all__ = ["ShebangedFile", "UnshebangedFile", "shebang", "ShebangNotFoundException"]
 __author__ = """Fady Adel"""
 __email__ = '2masadel@gmail.com'
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 
