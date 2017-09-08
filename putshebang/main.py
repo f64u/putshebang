@@ -198,4 +198,4 @@ class ShebangedFile(object):
 
 
 def shebang(file_name, lang=None, get_versions=False):
-    return list(map(lambda s: "#!{}".format(s), ShebangedFile.get_interpreter_path(file_name, lang, get_versions)))
+    return list(map(lambda s: "#!{}".format(s), ShebangedFile.get_interpreter_path(file_name, lang, get_versions)[1]))
