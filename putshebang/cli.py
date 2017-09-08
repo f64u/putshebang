@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import click
 import sys
-from putshebang import ShebangedFile, UnshebangedFile, ShebangNotFoundException
+from .main import ShebangedFile, UnshebangedFile
 """Console script for shebang."""
 
 

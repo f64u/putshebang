@@ -18,7 +18,7 @@ requirements = [
 
 setup(
     name='putshebang',
-    version='0.1.3',
+    version='0.1.4',
     description="A small tool that helps in adding the appropriate shebang",
     long_description=readme + '\n\n' + history,
     author="Fady Adel",
@@ -34,7 +34,7 @@ setup(
     install_requires=requirements,
     license="GNU General Public License v3",
     zip_safe=False,
-    keywords='putshebang',
+    keywords='putshebang add put shebang',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -47,6 +47,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
 )

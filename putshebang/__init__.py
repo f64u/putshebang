@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from .main import ShebangedFile, UnshebangedFile, shebang, ShebangNotFoundException
-import os as _os
+
 """Top-level package for putshebang."""
+
+from .main import ShebangedFile, UnshebangedFile, shebang, ShebangNotFoundException
 
 __all__ = ["ShebangedFile", "UnshebangedFile", "shebang", "ShebangNotFoundException"]
 __author__ = """Fady Adel"""

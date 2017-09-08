@@ -21,7 +21,8 @@ Features
 --------
 
 * Help in adding the appropriate shebang
-* Use in scripts to get shebang of a file using the `shebang` function
+* Use in other scripts to get shebang of a file using the `shebang` function
+* I'm not a good English speaker so try by yourself :') !
 
 Credits
 -------

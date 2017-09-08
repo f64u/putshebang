@@ -7,9 +7,14 @@ from __future__ import print_function
 import glob
 import os
 import re
-import tempfile
 import logging
+import sys
+
 from .data import Data
+
+# compatibility
+if sys.version_info.major < 3:
+    input = raw_input
 
 logging.basicConfig(format="%(levelname)s: %(message)s")
 
@@ -63,7 +68,7 @@ class ShebangedFile(object):
 
     def __init__(self, unshebanged_file, lang):
         self.file = unshebanged_file
-        self.shebang = None  # it'll be set in $lang setter
+        self.shebang = ''  # it'll be set in $lang setter
         self.lang = lang
 
     @property
@@ -72,46 +77,30 @@ class ShebangedFile(object):
 
     @lang.setter
     def lang(self, interpreter):
+        available_interpreters, available_paths = ShebangedFile.get_interpreter_path(self.file.name, interpreter, get_versions=True)
+        l = len(available_paths)
         if interpreter:
-            Data.add_shebang(self.file.name)
-            s = which(interpreter)
-            if not s:
-                raise ShebangNotFoundException("Interpreter for %s not found" % interpreter)
-            if len(s) != 1:
-                # use of globs when specifying the interpreter name
-                raise ValueError("Use of globs is not permitted when specifying the interpreter name")
-            path = s[0]
-
-        else:
             try:
-                interpreters = ShebangedFile.ALL_SHEBANGS[re.findall("\.(.+)$", self.file.name)[0]]
-            except(IndexError, KeyError):
-                # couldn't find the extension or it doesn't exist in the dict
-                raise ShebangNotFoundException("Couldn't guess the language from the file extension")
+                Data.add_interpreter(re.findall("\.(.+)$", self.file.name)[0], interpreter)
+            except IndexError:
+                pass
 
-            # bring all the files that starts with each $prg_lang and see if it matches the regex(that may specify
-            # and version of it)
-            # TODO: Try to find the list comprehensions equivalent
-            available_shebangs = []
-            for i in interpreters:
-                for p in which(i + "*"):
-                    if re.match(r'^%s(\d\.\d(\.\d)?)?$' % i, os.path.basename(p)):
-                        available_shebangs.append(p)
-
-            if not available_shebangs:
-                raise ShebangNotFoundException("interpreter for the language %s not found on this machine" %
-                                               interpreters[0])
-
-            l = len(available_shebangs)
-            if l > 1:
-                print("Found %d associated interpreters with this extension: " % l)
-                for n, s in zip(range(1, l + 1), available_shebangs):
-                    print("\t[%d]: %s" %(n, s))
-
-                r = int(input("Choose one of the above paths [1-%d](default is 1): " % l) or 1)
-                path = available_shebangs[r - 1]
+        if l == 0:
+            if len(available_interpreters) == 0:
+                raise ShebangNotFoundException("The file name extension is not associated with any known interpreter name")
             else:
-                path = available_shebangs[0]
+                s = '(' + re.sub(", (.*)$", "or \1", str(available_interpreters)[1:-1]) + ')'
+                raise ShebangNotFoundException("Interpreter for %s not found in this machine's PATH" % s)
+
+        if l > 1:
+            print("Found %d associated interpreters with this extension: " % l)
+            for n, s in zip(range(1, l + 1), available_paths):
+                print("\t[%d]: %s" % (n, s))
+
+            r = int(input("Choose one of the above paths [1-%d] (default is 1): " % l) or 1)
+            path = available_paths[r - 1]
+        else:
+            path = available_paths[0]
         self.shebang = "#!{}\n".format(path)
 
     def make_executable(self):
@@ -181,7 +170,7 @@ class ShebangedFile(object):
         :param name: get interpreter path based on its extension (str)
         :param interpreter: get interpreter path based on its name (str)
         :param get_versions: get available versions (bool)
-        :return: 
+        :return: interpreters and their paths (list, list)
         """
         if interpreter:
             interpreters = [interpreter]
@@ -190,11 +179,11 @@ class ShebangedFile(object):
             try:
                 interpreters = ShebangedFile.ALL_SHEBANGS[re.findall("\.(.+)$", name)[0]]
             except(IndexError, KeyError):
-                # couldn't find the extension or it doesn't exist in the json file
-                return []
+                # couldn't find the extension in the file name or it doesn't exist in the json file
+                return [], []
 
         if not get_versions:
-            return list(map(lambda l: which(l)[0], interpreters))
+            return interpreters, list(map(lambda l: which(l)[0], interpreters))
 
         # bring all the files that starts with each $interpreter and see if it matches the regex(that may specify
         # and version of it)
@@ -205,7 +194,7 @@ class ShebangedFile(object):
                 if re.match(r'^%s(\d\.\d(\.\d)?)?$' % i, os.path.basename(p)):
                     available_shebangs.append(p)
 
-        return available_shebangs
+        return interpreters, available_shebangs
 
 
 def shebang(file_name, lang=None, get_versions=False):
