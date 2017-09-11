@@ -1,34 +1,34 @@
 {
-    "rb": [
-        "ruby"
-    ],
-    "py": [
-        "python"
-    ],
-    "sh": [
-        "bash",
-        "sh",
-        "zsh"
-    ],
     "bash": [
         "bash"
-    ],
-    "zsh": [
-        "zsh"
-    ],
-    "pl": [
-        "perl"
     ],
     "js": [
         "node"
     ],
+    "lua": [
+        "lua"
+    ],
     "php": [
         "php"
+    ],
+    "pl": [
+        "perl"
+    ],
+    "py": [
+        "python"
+    ],
+    "rb": [
+        "ruby"
+    ],
+    "sh": [
+        "sh",
+        "bash",
+        "zsh"
     ],
     "tcl": [
         "tcl"
     ],
-    "lua": [
-        "lua"
+    "zsh": [
+        "zsh"
     ]
 }

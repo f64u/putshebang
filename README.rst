@@ -22,7 +22,7 @@ Features
 
 * Help in adding the appropriate shebang
 * Use in other scripts to get shebang of a file using the `shebang` function
-* I'm not a good English speaker so try by yourself :') !
+* I'm not a good English speaker so explore by yourself :') !
 
 Credits
 -------

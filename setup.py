@@ -12,13 +12,12 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [
-    'Click>=6.0',
+    "tabulate",
 ]
-
 
 setup(
     name='putshebang',
-    version='0.1.4',
+    version='0.1.5',
     description="A small tool that helps in adding the appropriate shebang",
     long_description=readme + '\n\n' + history,
     author="Fady Adel",
@@ -30,13 +29,14 @@ setup(
             'putshebang=putshebang.cli:main'
         ]
     },
+    platforms=["unix"],
     include_package_data=True,
     install_requires=requirements,
     license="GNU General Public License v3",
     zip_safe=False,
     keywords='putshebang add put shebang',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',

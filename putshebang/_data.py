@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """the class that manipulates data"""
+import json
 import os
 
 
@@ -11,13 +12,13 @@ class Data(object):
     @staticmethod
     def load():
         with open(Data.FILE_PATH, "r") as f:
-            Data.INTERPRETERS = eval(f.read())
+            Data.INTERPRETERS = json.load(f)
             return Data.INTERPRETERS
 
     @staticmethod
     def save():
         with open(Data.FILE_PATH, "w") as f:
-            f.write(Data.INTERPRETERS)
+            json.dump(Data.INTERPRETERS, f)
 
     @staticmethod
     def add_interpreter(ext, interpreter):
