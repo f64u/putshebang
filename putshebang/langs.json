@@ -1,34 +1,52 @@
 {
-    "bash": [
-        "bash"
-    ],
-    "js": [
-        "node"
-    ],
-    "lua": [
-        "lua"
-    ],
-    "php": [
-        "php"
-    ],
-    "pl": [
-        "perl"
-    ],
-    "py": [
-        "python"
-    ],
-    "rb": [
-        "ruby"
-    ],
-    "sh": [
-        "sh",
-        "bash",
-        "zsh"
-    ],
-    "tcl": [
-        "tcl"
-    ],
-    "zsh": [
-        "zsh"
-    ]
+    "bash": {
+        "default": ["bash", ""],
+        "other": []
+    },
+    "js": {
+        "default": ["node", ""],
+        "other": []
+    },
+    "lua": {
+        "default": ["lua", "5.3"],
+        "other": []
+    },
+    "php": {
+        "default": ["php", "7"],
+        "other": []
+    },
+    "pl": {
+        "default": ["perl", ""],
+        "other": []
+    },
+    "py": {
+        "default": ["python", "3.6"],
+        "other": [
+            "pypy",
+            "jython"
+        ]
+    },
+    "rb": {
+        "default": ["ruby", ""],
+        "other": [
+            "jruby"
+        ]
+    },
+    "sh": {
+        "default": ["sh",  ""],
+        "other": [
+            "bash",
+            "zsh"
+        ]
+    },
+    "tcl": {
+        "default": ["tcl", ""],
+        "other": [
+            "tclsh"
+        ]
+    },
+    "zsh": {
+        "default": ["zsh", ""],
+        "other": []
+    }
 }

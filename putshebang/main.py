@@ -6,12 +6,13 @@ from __future__ import print_function as _
 
 import glob as _glob
 import os as _os
+import pprint
 import re as _re
 import sys as _sys
 
 from typing import List, Tuple, Any
 
-from ._data import Data as _Data
+from putshebang._data import Data as _Data
 
 # compatibility
 if _sys.version_info.major == 2:
@@ -32,13 +33,6 @@ def which(cmd):
     return l
 
 
-def _warn(msg):
-    # type: (str) -> None
-    """prints a warning to stderr"""
-
-    print("WARNING: %s" % msg, file=_sys.stderr)
-
-
 class ShebangNotFoundException(Exception):
     pass
 
@@ -54,8 +48,12 @@ class UnshebangedFile(object):
         :param make_executable: a bool specifies whether make the file executable or not (obviously)
         """
         self.name = name
+        try:
+            self.extension = _re.findall("\.(.+)$", self.name)[0]
+        except IndexError:
+            self.extension = ''
         self.contents = ''
-        self.created = False    # to delete it if we want to
+        self.created = False  # to delete it if we want to
 
         if not _os.path.isfile(self.name):
             if not strict:
@@ -72,9 +70,7 @@ class UnshebangedFile(object):
 
     def create(self):
         # type: () -> None
-        """create an empty file of the object's name, setting self.created into True.
-         
-        """
+        """create an empty file of the object's name, setting self.created into True."""
         self.created = True
         with open(self.name, 'w') as f:
             f.write('')
@@ -82,8 +78,10 @@ class UnshebangedFile(object):
     def make_executable(self):
         # type: () -> None
         """change the stat of the object's file name to be executable
-        Example: -rw-rw-rw becomes -rwxrwxrwx
-                 -rw------ becomes -rwx------
+        
+        Example:
+             -rw-rw-rw becomes -rwxrwxrwx
+             -rw------ becomes -rwx------
         """
         mode = _os.stat(self.name).st_mode
         mode |= (mode & 0o444) >> 2
@@ -91,117 +89,90 @@ class UnshebangedFile(object):
 
 
 class ShebangedFile(object):
-    """ The file that will implement the required shebang. """
+    """ The file that will implement the required shebang.
+        basic usage:
+            >>> sf1 = ShebangedFile(UnshebangedFile("file.py", False, False))
+            >>> sf1.put_shebang()
+            0
+            >>> print(sf1.shebang, end='')
+            #!/usr/bin/python
+            <BLANKLINE>
+            >>> sf1.file.make_executable()
+            >>> sf1.shebang = "#!/usr/bin/ruby\\n"
+            >>> sf1.put_shebang()
+            0
+            >>> print(sf1.shebang, end='')
+            #!/usr/bin/ruby
+            <BLANKLINE>
+    """
 
     ALL_SHEBANGS = _Data.load()
 
-    def __init__(self, unshebanged_file, lang):
-        # type: (UnshebangedFile, str) -> ShebangedFile
+    def __init__(self, unshebanged_file):
+        # type: (UnshebangedFile) -> ShebangedFile
         """
         :param unshebanged_file: the file to add the shebang into
-        :param lang: the name of the programming language (the interpreter)
         """
         self.file = unshebanged_file
-        self.shebang = ''  # it'll be set in $lang setter
-        self.lang = lang
+        try:
+            self.shebang = "#!{}\n".format(which(ShebangedFile.ALL_SHEBANGS[self.file.extension]["default"][0])[0])
+        except (IndexError, KeyError):
+            self.shebang = ''
 
-    @property
-    def lang(self):
-        return self._lang
-
-    @lang.setter
-    def lang(self, interpreter):
-        # type: (str) -> Any
-        """ the lang and shebang setter
-        :param interpreter: name of the interpreter program
-        """
-        (extension,
-         available_interpreters,
-         available_paths) = ShebangedFile.get_interpreter_path(self.file.name, interpreter, get_versions=True)
-
-        if interpreter:
-            try:
-                _Data.add_interpreter(_re.findall("\.(.+)$", self.file.name)[0], interpreter)
-            except IndexError:
-                pass
-
-        l = len(available_paths)
-        if l == 0:
-            if len(available_interpreters) == 0:
-                raise ShebangNotFoundException("The file name extension is not associated with any known interpreter name")
-            else:
-                s = '(' + _re.sub(", (.+)$", "or \1", str(available_interpreters)[1:-1]) + ')'
-                raise ShebangNotFoundException("Interpreter for %s not found in this machine's PATH" % s)
-        elif l == 1:
-            path = available_paths[0]
-        else:
-            print("Found %d associated interpreters with .%s extension: " % (l, extension))
-            for n, s in zip(range(1, l + 1), available_paths):
-                print("\t[%d]: %s" % (n, s))
-
-            r = int(input("Choose one of the above paths [1-%d] (default is 1): " % l) or 1)
-            path = available_paths[r - 1]
-
-        self._lang = _os.path.basename(path[0])
-        self.shebang = "#!{}\n".format(path)
-
-    def put_shebang(self, newline_count, overwrite):
-        # type: (int, bool) -> bool
-        """puts the shebang on the first line of self.file plus(newline character * newline_count)
+    def put_shebang(self, newline_count=1, overwrite=True):
+        # type: (int, bool) -> int
+        """puts the shebang on the first line of self.file plus ('\n' * newline_count)
         :param newline_count: number of '\n' appended after the shebang
         :param overwrite: overwrite if it's a broken shebang
-        :return: the success of the method
+        :return: what __check_shebang() returns
         """
 
         self.shebang += '\n' * newline_count
-        if not self.__check_shebang(overwrite):
-            print("The contents of the file wasn't modified..")
-            # we want to exit !
-            return False
+        code = self.__check_shebang(overwrite)
+        if code != 0:
+            return code
 
         with open(self.file.name, 'w') as f:
             f.write(self.shebang)
             f.write(self.file.contents)
-        return True
+        return code  # which is 0
 
     def remove_shebang(self):
         # type: () -> None
-        """removes the first line of self.file.contents (it should be the shebang) plus the whitespaces
-        """
-        con = self.file.contents
+        """removes the first line of self.file.contents (it should be the shebang) plus the whitespaces"""
+        con = self.file.contents  # just a rename
         self.file.contents = con = con[con.find('\n') + 1:]
         self.file.contents = _re.sub("^\s*", '', con)
 
     def __check_shebang(self, overwrite):
-        # type: () -> bool
+        # type: (bool) -> int
         """Checks if a shebang does exist and reports its state. 
         :param overwrite: overwrite if it's a broken shebang
-        :return: we want to exit or not
+        :return:
+            1 -> The correct the shebang is already there
+            2 -> There's a shebang, but it's pointing to a wrong interpreter
+            0 -> Don't care..
         """
 
-        con = self.file.contents  # just a rename
+        con = self.file.contents
         if con.startswith(self.shebang):
-            _warn("File: {}: The shebang is already there.".format(self.file.name))
-            return False
+            return 1
 
         elif con.startswith("#!"):
             if overwrite:
                 self.remove_shebang()
-                # True
-
+                # 0
             else:
-                _warn("File: {}: There's a shebang already there but it's pointing to a wrong interpreter, "
-                      "you can use the option --overwrite to overwrite it.".format(self.file.name))
-                return False
+                return 2
 
-        return True
+        return 0
 
     @staticmethod
     def print_known():
         import tabulate
 
         data = [
-            (("." + ext), inter, ShebangedFile.get_interpreter_path("tmp.{}".format(ext), get_versions=True)[2])
+            (("." + ext), inter, ShebangedFile.get_interpreter_path("tmp.{}".format(ext), get_versions=True)[1])
             for ext, inter in ShebangedFile.ALL_SHEBANGS.items()
         ]
 
@@ -212,37 +183,39 @@ class ShebangedFile(object):
         ))
 
     @staticmethod
-    def get_interpreter_path(name, interpreter=None, get_versions=False):
-        # type: (str, str, bool) -> Tuple[str, List[str], List[str]]
+    def get_interpreter_path(name, interpreter=None, get_versions=False, get_symlinks=True):
+        # type: (str, str, bool, bool) -> Tuple[List[str], List[str]]
         """get path of interpreters 
         
         :param name: get interpreter path based on its extension
         :param interpreter: get interpreter path based on its name
         :param get_versions: get available versions
+        :param get_symlinks: get the symlink even if the realpath of it is already in the `available_paths'
         :return: file extension, interpreters and their paths
         """
 
-        extension = ''  # dummy variable for late reference
-        if interpreter:
+        if interpreter is not None:
             interpreters = [interpreter]
         else:
             try:
-                extension = _re.findall("\.(.+)$", name)[0]
-                interpreters = ShebangedFile.ALL_SHEBANGS[extension]
+                interpreters = ShebangedFile.ALL_SHEBANGS[_re.findall("\.(.+)$", name)[0]]
+                interpreters = [interpreters["default"][0]] + interpreters["other"]
             except(IndexError, KeyError):
                 # couldn't find the extension in the file name or it doesn't exist in the json file
-                return extension, [], []    # `extension` may actually change
+                return [], []
 
-        if not get_versions:
-            return extension, interpreters, list(map(lambda l: which(l)[0], interpreters))
-
-        # bring all the files that starts with each `interpreter` and see if it matches the regex
+        # bring all the files that starts with each `interpreter' and see if it matches the regex
         #                   (the goal is to specify any version of it)
         # TODO: Try to find the list-comprehensions equivalent
-        available_shebangs = []
+        available_paths = []
         for i in interpreters:
             for p in which(i + "*"):
-                if _re.match(r'^%s-?(\d\.\d(\.\d)?)?$' % i, _os.path.basename(p)):
-                    available_shebangs.append(p)
+                if _re.match(r'^%s-?(\d{1,4}(\.\d{1,2}(\.\d)?)?)?$' % i, _os.path.basename(p)):
+                    available_paths.append(p)
+        if not get_versions:
+            available_paths = filter(lambda path: not _re.match("^\w+\d+.*(?#:that's enough for me)", _os.path.basename(path)), available_paths)
+        if not get_symlinks:
+            dummy = available_paths
+            available_paths = filter(lambda path: not(_os.path.islink(path) and _os.path.realpath(path) in dummy), available_paths)
 
-        return extension, interpreters, available_shebangs
+        return interpreters, sorted(available_paths, reverse=True)
