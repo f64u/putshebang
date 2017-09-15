@@ -9,7 +9,7 @@ import sys
 
 from putshebang import __version__
 from putshebang._data import Data
-from putshebang.main import ShebangedFile, UnshebangedFile, ShebangNotFoundException
+from putshebang.shebangs import ShebangedFile, UnshebangedFile, ShebangNotFoundError
 
 
 def warn(msg):
@@ -26,9 +26,9 @@ def error(err, exit_code=1):
     :param exit_code: the exit code to exit with
     """
 
-    if issubclass(type(err), BaseException):
+    if isinstance(err, BaseException):
         format = "ERROR: %(error)s: %(msg)s"
-    elif issubclass(type(err), str):
+    elif isinstance(err, str):
         format = "ERROR: %(msg)s"
     else:
         raise TypeError()
@@ -37,12 +37,12 @@ def error(err, exit_code=1):
 
 
 def main():
-    """the main entry for the whole thing"""
+    """The main entry for the whole thing."""
 
     parser = argparse.ArgumentParser(
         description="A small utility helps in adding the appropriate shebang to FILEs.",
         add_help=False,
-        usage="%(prog)s [OPTIONS] [FILE ...]"
+        usage="%s [OPTIONS] [FILE ...]" % ("putshebang" if __name__ == '__main__' else "%(prog)s")
     )
 
     arguments = parser.add_argument_group("Arguments")
@@ -80,44 +80,47 @@ def main():
         ShebangedFile.print_known()
         return rs
 
-    if len(args.file) == 0:
+    if args.file is None:
         error(argparse.ArgumentError(args.file, "this argument is required"), 2)
 
     sf = None
     for f in args.file:
         try:
             sf = ShebangedFile(UnshebangedFile(f, args.strict, args.executable))
-            (available_interpreters,
-             available_paths) = ShebangedFile.get_interpreter_path(sf.file.name, args.lang, get_versions=True,
-                                                                   get_symlinks=not args.no_symlinks)
-            if args.lang:
+            (interpreters,
+             paths) = ShebangedFile.get_interpreter_path(sf.file.name, args.lang, get_versions=True,
+                                                         get_symlinks=not args.no_symlinks)
+            if args.lang is not None:
                 inters = sf.ALL_SHEBANGS.get(sf.file.extension, [])
                 if args.lang not in inters and sf.file.extension:
                     rep = input("The interpreter %r is not associated with the extension .%s\n"
-                                "Do you wan't to associate them? [Y/n]: " % (args.lang, sf.file.extension)).lower() or "y"
+                                "Do you wan't to associate them? [Y/n]: " % (args.lang, sf.file.extension)).lower()\
+                          or "y"
+
                     if rep == "y":
                         Data.INTERPRETERS[sf.file.extension] = inters + [args.lang]
 
-            l = len(available_paths)
-            if l == 0:
-                if len(available_interpreters) == 0:
-                    raise ShebangNotFoundException(
-                        "The file name extension is not associated with any known interpreter name")
+            all_paths = paths.get("all")
+            all_inters = interpreters.get("all")
+            if all_paths is None:
+                if all_inters is None:
+                    raise ShebangNotFoundError(
+                        "The file name extension is not associated with any known interpreter name"
+                    )
                 else:
-                    s = '(' + re.sub(", (.+)$", "or \1", str(available_interpreters)[1:-1]) + ')'
-                    raise ShebangNotFoundException("Interpreter for %s not found in this machine's PATH" % s)
-            elif l == 1:
-                path = available_paths[0]
-            else:
-                if args.default:
-                    path = available_paths[0]
-                else:
-                    print("Found %d interpreters for file %r: " % (l, sf.file.name))
-                    for n, s in zip(range(1, l + 1), available_paths):
-                        print("\t[%d]: %s" % (n, s))
+                    s = '(' + re.sub(", (.+)$", "or \1", str(all_inters)[1:-1]) + ')'
+                    raise ShebangNotFoundError("Interpreter for %s not found in this machine's PATH" % s)
 
-                    r = int(input("Choose one of the above paths [1-%d] (default is 1): " % l) or 1)
-                    path = available_paths[r - 1]
+            if args.default or len(all_inters) == 1:
+                path = paths["default"]
+            else:
+                l = len(all_inters)  # saving resources
+                print("Found %d interpreters for file %r: " % (l, sf.file.name))
+                for n, s in zip(range(1, l + 1), all_paths):
+                    print("\t[%d]: %s" % (n, s))
+
+                r = int(input("Choose one of the above paths [1-%d] (default is 1): " % l) or 1)
+                path = all_paths[r - 1]
 
             sf.shebang = "#!{}\n".format(path)
         except Exception as e:
@@ -132,7 +135,9 @@ def main():
             error(KeyboardInterrupt("Abort!"), 130)
 
         code = sf.put_shebang(newline_count=args.newline, overwrite=args.overwrite)
-        if code == 1:
+        if code == 0:
+            sf.file.save()
+        elif code == 1:
             warn("File: {}: The correct shebang is already there.".format(sf.file.name))
             rs = 0
         elif code == 2:

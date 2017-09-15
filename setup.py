@@ -26,7 +26,7 @@ setup(
     packages=find_packages(include=['putshebang']),
     entry_points={
         'console_scripts': [
-            'putshebang=putshebang.cli:main'
+            'putshebang=putshebang.__main__:main'
         ]
     },
     platforms=["unix"],

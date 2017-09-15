@@ -6,7 +6,7 @@
 import unittest
 from subprocess import check_output
 
-from putshebang.main import shebang, which
+from putshebang.shebangs import shebang, which
 
 
 class TestPutshebang(unittest.TestCase):
