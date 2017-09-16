@@ -8,6 +8,7 @@ import glob as _glob
 import os as _os
 import re as _re
 import sys as _sys
+from pprint import pformat, pprint
 
 from typing import List, Tuple, Dict
 
@@ -185,7 +186,7 @@ class ShebangedFile(object):
         return 0
 
     @staticmethod
-    def print_known():
+    def print_known(get_symlinks):
         """Prints a nice formatted table of known interpreters.
         
         prints a table its cells is consists of:
@@ -197,19 +198,57 @@ class ShebangedFile(object):
         """
         import tabulate
 
-        data = [
-            (("." + ext), inter, ShebangedFile.get_interpreter_path("tmp.{}".format(ext), get_versions=True)[1])
-            for ext, inter in ShebangedFile.ALL_SHEBANGS.items()
-        ]
+        def _format(dictionary):
+            all = dictionary["all"]
+            s = '['
+            for i in all:
+                if i == dictionary["default"]:
+                    s += i + " (default)"
+                else:
+                    s += i
+
+                if i != all[-1]:
+                    s += ', '
+
+            s += "]"
+
+            if len(all) >= 2:
+                s = " and ".join(s.rsplit(', ', 1))
+
+            return s
+
+        # data = []
+        # for ext in ShebangedFile.ALL_SHEBANGS.keys():
+        #     tup = ShebangedFile.get_interpreter_path("file.{}".format(ext), get_versions=True, get_symlinks=not get_symlinks)
+        #     other_inters = tup[1]["all"]
+        #     try:
+        #         other_inters.remove(tup[1]["default"])
+        #     except ValueError:
+        #         pass
+        #
+        #     other_paths = tup[1]["all"]
+        #     try:
+        #         other_paths.remove(tup[1]["default"])
+        #     except ValueError:
+        #         pass
+        #      data.append((("." + ext), tup[0]["default"], other_inters, tup[1]["default"], other_paths))
+
+        data = []
+        for ext in ShebangedFile.ALL_SHEBANGS:
+            tup = ShebangedFile.get_interpreter_path("file.{}".format(ext), get_versions=True,
+                                                     get_symlinks=not get_symlinks)
+            data.append((("." + ext), _format(tup[0]), _format(tup[1])))
+
+
 
         print(tabulate.tabulate(
             data,
-            headers=("Extension", "Interpreter Name(s)", "Available Path(s)"),
+            headers=("Extension", "Available Interpreter(s)", "Available Path(s)"),
             tablefmt="fancy_grid"
         ))
 
     @staticmethod
-    def get_interpreter_path(name, interpreter=None, get_versions=False, get_symlinks=True):
+    def get_interpreter_path(name=None, interpreter=None, get_versions=False, get_symlinks=True):
         # type: (str, str, bool, bool) -> Tuple[Dict[str: List[str], str: List[str]], Dict[str: str, str: List[str]]]
         """Get path of interpreters.
         
@@ -227,7 +266,7 @@ class ShebangedFile(object):
         if interpreter is not None:
             l_name, version = _re.findall(version_regex % '(\w+)', interpreter)[0][:2]
             interpreters = {"default": [l_name, version], "all": [l_name]}
-        else:
+        elif name is not None:
             try:
                 # the error might happens here and should only be here
                 interpreters = ShebangedFile.ALL_SHEBANGS[_re.findall("\.(.+)$", name)[0]]
@@ -238,10 +277,11 @@ class ShebangedFile(object):
             except(IndexError, KeyError):
                 # couldn't find the extension in the file name or it doesn't exist in the json file
                 return {}, {}
+        else:
+            raise TypeError("either 'name' or 'lang' should be specified")
 
         # ======== Initializations used in all cases ==================
         default_path = ''
-        all_paths = []
         d = interpreters["default"]
         a = interpreters["all"]
         regex = _re.compile("^{}-?{}$".format(*d))
@@ -253,19 +293,13 @@ class ShebangedFile(object):
         # ===============================================================
 
         if not get_versions:
-            for i in a:
-                for p in which(i):
-                    all_paths.append(p)
+            all_paths = [p for i in a for p in which(i)]
 
             return interpreters, {"default": default_path, "all": sorted(all_paths)}
 
         # bring all the files that starts with each `interpreter' and see if it matches the regex
         #                   (the goal is to specify any version of it)
-        # TODO: Try to find the list-comprehensions equivalent
-        for i in a:
-            for p in which(i + "*"):
-                if _re.match(version_regex % i, _os.path.basename(p)):
-                    all_paths.append(p)
+        all_paths = [p for i in a for p in which(i + '*') if _re.match(version_regex % i, _os.path.basename(p))]
 
         if not get_symlinks:
             dummy = all_paths

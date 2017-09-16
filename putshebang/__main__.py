@@ -36,7 +36,7 @@ def error(err, exit_code=1):
     sys.exit(exit_code)
 
 
-def main():
+def main(args_=None):
     """The main entry for the whole thing."""
 
     parser = argparse.ArgumentParser(
@@ -72,12 +72,12 @@ def main():
     edit.add_argument("-n", "--newline", metavar="N", type=int, default=1,
                       help="number of newlines to be put after the shebang; default is 1")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=args_)
 
     # return status
     rs = 0
     if args.known:
-        ShebangedFile.print_known()
+        ShebangedFile.print_known(args.no_symlinks)
         return rs
 
     if args.file is None:
@@ -90,15 +90,6 @@ def main():
             (interpreters,
              paths) = ShebangedFile.get_interpreter_path(sf.file.name, args.lang, get_versions=True,
                                                          get_symlinks=not args.no_symlinks)
-            if args.lang is not None:
-                inters = sf.ALL_SHEBANGS.get(sf.file.extension, [])
-                if args.lang not in inters and sf.file.extension:
-                    rep = input("The interpreter %r is not associated with the extension .%s\n"
-                                "Do you wan't to associate them? [Y/n]: " % (args.lang, sf.file.extension)).lower()\
-                          or "y"
-
-                    if rep == "y":
-                        Data.INTERPRETERS[sf.file.extension] = inters + [args.lang]
 
             all_paths = paths.get("all")
             all_inters = interpreters.get("all")
@@ -113,6 +104,8 @@ def main():
 
             if args.default or len(all_inters) == 1:
                 path = paths["default"]
+                if not path:
+                    raise ShebangNotFoundError("Default interpreter not found on this machine's PATH")
             else:
                 l = len(all_inters)  # saving resources
                 print("Found %d interpreters for file %r: " % (l, sf.file.name))
