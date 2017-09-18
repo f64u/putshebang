@@ -2,6 +2,11 @@
 History
 =======
 
+0.1.6 (2017-09-*)
+-----------------
+* Decorating the output by colors and stuff
+
+
 0.1.5 (2017-09-15)
 ------------------
 * Leaving :code:`click` and using :code:`argparse`
@@ -16,7 +21,7 @@ History
 * Add shebang selection from different versions of the same interpreter, or different interpreters associated with the same extension
 * Generalize exception handling
 * Reading mappings (the :code:`{extension: interpreter}`) from a :code:`json` file
-* Enhance the `shebang` function
+* Enhance the :code:`shebang` function
 
 0.1.3 (2017-09-02)
 ------------------

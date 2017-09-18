@@ -132,7 +132,7 @@ class Interpreter(object):
         self.extension = extension
         self.version = version
         self.default = default
-        self.default_path = InterpreterPath('', in_default=True)
+        self.default_path = InterpreterPath('', default_for_inter=True)
         if paths is None:
             self.paths = []
         else:
@@ -142,7 +142,7 @@ class Interpreter(object):
 
     @property
     def all_paths(self):
-        return self.paths + [self.default_path] if self.default_path.path else []
+        return sorted(self.paths + [self.default_path] if self.default_path.path else [], reverse=True)
 
     @property
     def real_paths(self):
@@ -161,8 +161,8 @@ class Interpreter(object):
         """Makes all the paths real (rebasing links), making a backup for them"""
         self.backup = {"default": self.default_path, "paths": self.paths}
 
-        self.default_path = InterpreterPath(self.default_path.realpath, in_default=True)
-        self.paths = [InterpreterPath(p.realpath, p.in_default) for p in self.all_paths]
+        self.default_path = InterpreterPath(self.default_path.realpath, default_for_inter=True)
+        self.paths = [InterpreterPath(p.realpath, p.default_for_ext, p.default_for_inter) for p in self.all_paths]
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -183,15 +183,18 @@ class Interpreter(object):
 class InterpreterPath(object):
     """The interpreter's path and its state."""
 
-    def __init__(self, path, in_default=False):
+    def __init__(self, path, default_for_inter=False, default_for_ext=False):
+        # type: (str, bool, bool) -> ...
         """Constructor.
         :param path: the path of the interpreter
-        :param in_default: whether it's the default interpreter or not
+        :param default_for_inter: whether it's the default interpreter or not
+        :param default_for_ext: whether it's the default for an extension or not
         """
 
         self._path = path
         self.executable = _os.path.basename(self.path)
-        self.in_default = in_default
+        self.default_for_ext = default_for_ext
+        self.default_for_inter = default_for_inter
         self.islink = _os.path.islink(path)
         self.realpath = _os.path.realpath(path) if path else ''
 
@@ -209,9 +212,9 @@ class InterpreterPath(object):
         return str(self.path)
 
     def __repr__(self):
-        return '<%s path=%r, in_default=%r, islink=%r, realpath=%r>' % (type(self).__name__,
-                                                                        self.path, self.in_default,
-                                                                        self.islink, self.realpath)
+        return '<%s path=%r, default_for_ext=%r, default_for_inter=%r, islink=%r, realpath=%r>' \
+               % (type(self).__name__, self.path, self.default_for_ext, self.default_for_inter, self.islink,
+                  self.realpath)
 
     def __eq__(self, other):
         return self.path == other.path
@@ -312,76 +315,77 @@ class ShebangedFile(object):
         return 0
 
     @staticmethod
-    def print_known(get_symlinks):
+    def print_known(get_links):
         """Prints a nice formatted table of known interpreters.
         
         prints a table its cells is consists of:
-                           +------------+----------------------------+--------------------------------------------+
-                           | .`extension'| interpreter name (a list) | available interpreter paths (also a list)) |
-                           +------------+----------------------------+--------------------------------------------+
-                Example:   | .py        | [python, pypy and jython]  | [/usr/bin/python and /usr/bin/python2]     | 
-                           +------------+----------------------------+--------------------------------------------+
+                           +------------+----------------------------+---------------------------------------------+
+                           | .`extension'| interpreter name (a list) | available interpreter paths (also a list))  |
+                           +-------------+----------------------------+--------------------------------------------+
+                Example:   | .py         | [python, pypy and jython]  | [/usr/bin/python and /usr/bin/python2]     | 
+                           +-------------+----------------------------+--------------------------------------------+
         :param get_symlinks: if true, get links in `available paths' column
         """
         import tabulate
 
-        def _format(iterable):
-            all = dictionary["all"]
-            s = _decorate('{G}[')
-            for i in all:
-                # if it's a list it'll be an interpreter and we wan't to show it's version
-                version = isinstance(dictionary["default"], list) and dictionary["default"][1] or 0
-                dec_i = _decorate("{B}" + i)
-                if i == dictionary["default"] or i in dictionary["default"]:
-                    s += dec_i + _decorate(" ({GR}default{v}{GR})",
-                                           v=(_decorate(' ({Y}v{G}{v}{GR})', v=version) if version else ''))
-                else:
-                    s += dec_i
-
-                if i != all[-1]:
-                    s += _decorate('{Y}, ')
-
-            s += _decorate("{G}]")
-
-            if len(all) >= 2:
-                s = _decorate(" and").join(s.rsplit(',', 1))
-
-            return s
+        # def _format(iterable):
+        #     all = dictionary["all"]
+        #     s = _decorate('{G}[')
+        #     for i in all:
+        #         # if it's a list it'll be an interpreter and we wan't to show it's version
+        #         version = isinstance(dictionary["default"], list) and dictionary["default"][1] or 0
+        #         dec_i = _decorate("{B}" + i)
+        #         if i == dictionary["default"] or i in dictionary["default"]:
+        #             s += dec_i + _decorate(" ({GR}default{v}{GR})",
+        #                                    v=(_decorate(' ({Y}v{G}{v}{GR})', v=version) if version else ''))
+        #         else:
+        #             s += dec_i
+        #
+        #         if i != all[-1]:
+        #             s += _decorate('{Y}, ')
+        #
+        #     s += _decorate("{G}]")
+        #
+        #     if len(all) >= 2:
+        #         s = _decorate(" and").join(s.rsplit(',', 1))
+        #
+        #     return s
 
         doesnt_fit = True
         headers = ("Extension", "Available Interpreter(s)", "Available Interpreter Path(s)")
         data = []
         for ext in ShebangedFile.ALL_SHEBANGS:
-            tup = ShebangedFile.get_interpreter("file.{}".format(ext), get_versions=True,
-                                                get_symlinks=not get_symlinks)
-            data.append(((_decorate("{GR}.{C}" + ext)), _format(tup[0]), _format(tup[1])))
+            inters = ShebangedFile.get_interpreter("file.{}".format(ext), get_versions=True, get_links=get_links)
+            all_inters = [inters["default"]] + inters["other"]
+            data.append(((_decorate("{GR}.{C}" + ext)), [str(i) for i in all_inters], [p.path for i in all_inters for p in i.all_paths]))
         table = tabulate.tabulate(
             data,
-            headers=tuple(map(lambda h: _decorate("{G}" + h), headers)),
+            headers=tuple(map(lambda head: _decorate("{G}" + head), headers)),
             tablefmt="fancy_grid"
         )
-        while doesnt_fit:
-
-            if len(table.split('\n')[0]) >= _shutil.get_terminal_size()[0]:
-                print(_decorate("{INFO} {GR}Your screen size doesn't fit for the whole table."))
-                print(_decorate("{INFO} {GR}Available columns: " + ", ".join(
-                    [_decorate("{G}[{Y}{n}{G}] {c}", n=n + 1, c=c) for n, c in enumerate(headers)]
-                ) + '.'))
-                rep = input(_decorate("{INFO} {GR}Enter column numbers that you want to add separated by a comma: "))
-                rep = rep.split(',')
-                edited_headers = []
-                error = False
-                for h in rep:
-                    try:
-                        edited_headers.append(headers[int(h) - 1])
-                    except (IndexError, ValueError):
-                        print(_decorate("{ERR} {R}ERROR{W}: {GR} invalid input"))
-                        error = True
-                        break
-                if error:
-                    continue
-            doesnt_fit = False
-            print(table)
+        print(table)
+        # while doesnt_fit:
+        #
+        #     if len(table.split('\n')[0]) >= _shutil.get_terminal_size()[0]:
+        #         print(_decorate("{INFO} {GR}Your screen size doesn't fit for the whole table."))
+        #         print(_decorate("{INFO} {GR}Available columns: " + ", ".join(
+        #             [_decorate("{G}[{Y}{n}{G}] {c}", n=n + 1, c=c) for n, c in enumerate(headers)]
+        #         ) + '.'))
+        #         rep = input(_decorate("{INFO} {GR}Enter column numbers that you want to add separated by a comma: "))
+        #         rep = rep.split(',')
+        #         edited_headers = []
+        #         error = False
+        #         for h in rep:
+        #             try:
+        #                 edited_headers.append(headers[int(h) - 1])
+        #             except (IndexError, ValueError):
+        #                 print(_decorate("{ERR} {R}ERROR{W}: {GR} invalid input"))
+        #                 error = True
+        #                 break
+        #         if error:
+        #             continue
+        #     doesnt_fit = False
+        #     print(table)
 
     @staticmethod
     def get_interpreter(name=None, interpreter=None, get_versions=False, get_links=0):
@@ -392,8 +396,8 @@ class ShebangedFile(object):
         :param interpreter: get interpreter path based on its name (higher precedence than the actual file name)
         :param get_versions: get available versions (however, if false, if `interpreter' or `the default interpreter'
         contains a version, you'll receive it)
-        :param get_links: 0 means get every thing
-                          1 means don't get links but get real paths even if they're not in PATHS, 
+        :param get_links: 0 means you'll get every thing as found on PATH (no action taken for links
+                          1 means don't get links but get real paths even if they're not in PATHS
                           2 means same as 1 but exclude the ones that are not in PATH (that also means the ones already
                             exist (no multiple references for the same file))
         :return: available interpreters (default and other) and their paths (default and other also)
@@ -409,7 +413,7 @@ class ShebangedFile(object):
             interpreters = {"default": {}, 'other': [Interpreter(l_name, version=version)]}
         elif name is not None:
             try:
-                # the error might happens the following block and should only be here
+                # the error might happens in the following block and should only be here
                 ext = _re.findall("\.(.+)$", name)[0]
                 interpreters = ShebangedFile.ALL_SHEBANGS[ext]
 
@@ -418,9 +422,9 @@ class ShebangedFile(object):
                                 }
             except(IndexError, KeyError):
                 # couldn't find the extension in the file name or it doesn't exist in the json file
-                return {}, {}
+                return {"default": None, "other": []}
         else:
-            raise TypeError("either 'name' or 'lang' should be specified")
+            raise TypeError("either 'name' or 'interpreter' should be specified")
 
         if not get_versions:
             # we don't need it's function, so None it.
@@ -434,25 +438,39 @@ class ShebangedFile(object):
             # (`python' because `inter.version' might be empty)
             regex = _re.compile("^{}-?{}$".format(inter.name, inter.version))
 
+            comehere = True
             for path in which(inter.name + "*"):
                 executable = _os.path.basename(path)
-                if regex.match(executable):
-                    inter.default_path = InterpreterPath(path, in_default=True)
-                if version_regex and _re.match(version_regex % inter.name, executable):
+                if comehere and regex.match(executable):
+                    if inter == interpreters["default"]:
+                        defpath = InterpreterPath(path, default_for_inter=True, default_for_ext=True)
+                    else:
+                        defpath = InterpreterPath(path, default_for_inter=True)
+                    inter.default_path = defpath
+                    comehere = False
+                elif version_regex and _re.match(version_regex % inter.name, executable):
                     inter.paths.append(InterpreterPath(path))
 
         if get_links == 1:
             for i in all_data:
                 i.realize_paths()
+
+            l = []
+            for i in all_data:
+                for p in i.all_paths:
+                    if p not in l:
+                        l.append(p)
+                    else:
+                        i.paths.remove(p)
+
         elif get_links == 2:
             for i in all_data:
                 for p in i.paths[:]:
-                    if p.islink and p.realpath in [s.realpath for s in i.real_paths]:
+                    if p.islink and p.realpath in [s.path for s in i.all_paths]:
                         i.paths.remove(p)
-        del all_data
 
         return interpreters
 
 
 if __name__ == '__main__':
-    pprint(ShebangedFile.get_interpreter("file.py", get_links=1))
+    pprint(ShebangedFile.get_interpreter("file.py", get_versions=True, get_links=1))

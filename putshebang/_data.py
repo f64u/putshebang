@@ -3,9 +3,6 @@
 """the class that manipulates data"""
 import json
 import os
-from pprint import pprint
-
-from . import Interpreter, InterpreterPath
 
 
 class Data(object):
@@ -15,8 +12,7 @@ class Data(object):
     @staticmethod
     def load():
         with open(Data.FILE_PATH, "r") as f:
-            data = json.load(f)
-            pprint(data)
+            Data.INTERPRETERS = json.load(f)
             return Data.INTERPRETERS
 
     @staticmethod
@@ -30,6 +26,3 @@ class Data(object):
         if interpreter not in inters:
             inters.append(interpreter)
         Data.INTERPRETERS[ext] = inters
-
-if __name__ == '__main__':
-    Data.load()

@@ -10,7 +10,7 @@ putshebang
         :target: https://travis-ci.org/faddyy/putshebang
 
 
-A small tool that helps in adding the appropriate shebang
+A small tool that helps in adding the appropriate shebang to a set of files
 
 
 * Free software: GNU General Public License v3

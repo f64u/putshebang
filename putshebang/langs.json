@@ -1,52 +1,111 @@
 {
     "bash": {
-        "default": ["bash", ""],
-        "other": []
+        "default": {
+            "name": "bash",
+            "version": ""
+        },
+        "other": [
+
+        ]
     },
     "js": {
-        "default": ["node", ""],
-        "other": []
+        "default": {
+            "name": "node",
+            "version": ""
+        },
+        "other": [
+
+        ]
     },
     "lua": {
-        "default": ["lua", "5.3"],
+        "default": {
+            "name": "lua",
+            "version": "5.3"
+        },
         "other": []
     },
     "php": {
-        "default": ["php", "7"],
-        "other": []
+        "default": {
+            "name": "php",
+            "version": ""
+        },
+        "other": [
+
+        ]
     },
     "pl": {
-        "default": ["perl", ""],
-        "other": []
+        "default": {
+            "name": "perl",
+            "version": ""
+        },
+        "other": [
+
+        ]
     },
     "py": {
-        "default": ["python", "3.6"],
+        "default": {
+            "name": "python",
+            "version": "3.6"
+        },
         "other": [
-            "pypy",
-            "jython"
+            {
+                "name": "pypy",
+                "version": "3"
+            },
+            {
+                "name": "jython",
+                "version": ""
+            }
+
         ]
     },
     "rb": {
-        "default": ["ruby", ""],
+        "default": {
+            "name": "ruby",
+            "version": ""
+        },
         "other": [
-            "jruby"
+            {
+                "name": "jruby",
+                "version": ""
+            }
         ]
     },
     "sh": {
-        "default": ["sh",  ""],
+        "default": {
+            "name": "sh",
+            "version": ""
+        },
         "other": [
-            "bash",
-            "zsh"
+            {
+                "name": "bash",
+                "version": ""
+            },
+            {
+                "name": "zsh",
+                "version": ""
+            }
         ]
     },
     "tcl": {
-        "default": ["tcl", ""],
+        "default": {
+            "name": "tcl",
+            "version": ""
+        },
         "other": [
-            "tclsh"
+            {
+                "name": "tclsh",
+                "version": ""
+            }
         ]
     },
     "zsh": {
-        "default": ["zsh", ""],
-        "other": []
+        "default": {
+            "name": "zsh",
+            "version": ""
+        },
+        "other": [
+
+        ]
     }
 }

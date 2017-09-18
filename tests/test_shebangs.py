@@ -16,4 +16,4 @@ class TestPutshebang(unittest.TestCase):
 
     def test_command_line_interface(self):
         assert cli.main(["-l", "python", join(gettempdir(), "file.py")]) == 0
-        assert "#!" + which("python")[0] in shebang("tmp.py", get_versions=True, get_symlinks=True)
+        assert "#!" + which("python")[0] in shebang("tmp.py", get_versions=True)
