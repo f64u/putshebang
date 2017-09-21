@@ -6,7 +6,7 @@
 import unittest
 
 from putshebang import shebang, which
-from putshebang import __main__ as cli
+from putshebang import cli as cli
 from tempfile import gettempdir
 from os.path import join
 

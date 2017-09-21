@@ -58,5 +58,8 @@ target/
 # pyenv python configuration file
 .python-version
 
-# Pycharm's work
+# Pycharm's stuff
 .idea/
+
+# rst2html stuff
+*.html

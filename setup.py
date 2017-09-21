@@ -13,6 +13,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     "tabulate",
+    "wcwidth",
 ]
 
 setup(
@@ -26,7 +27,7 @@ setup(
     packages=find_packages(include=['putshebang']),
     entry_points={
         'console_scripts': [
-            'putshebang=putshebang.__main__:main'
+            'putshebang=putshebang.cli:main'
         ]
     },
     platforms=["unix"],

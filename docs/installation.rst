@@ -14,7 +14,7 @@ To install putshebang, run this command in your terminal:
 
     $ pip install putshebang
 
-This is the preferred method to install putshebang, as it will always install the most recent stable release. 
+This is the preferred method to install putshebang, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -34,12 +34,6 @@ You can either clone the public repository:
 
     $ git clone git://github.com/faddyy/putshebang
 
-Or download the `tarball`_:
-
-.. code-block:: console
-
-    $ curl  -OL https://github.com/faddyy/putshebang/tarball/master
-
 Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
@@ -48,4 +42,3 @@ Once you have a copy of the source, you can install it with:
 
 
 .. _Github repo: https://github.com/faddyy/putshebang
-.. _tarball: https://github.com/faddyy/putshebang/tarball/master

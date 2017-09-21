@@ -4,7 +4,7 @@
             "name": "bash",
             "version": ""
         },
-        "other": [
+        "others": [
 
         ]
     },
@@ -13,7 +13,7 @@
             "name": "node",
             "version": ""
         },
-        "other": [
+        "others": [
 
         ]
     },
@@ -22,14 +22,14 @@
             "name": "lua",
             "version": "5.3"
         },
-        "other": []
+        "others": []
     },
     "php": {
         "default": {
             "name": "php",
             "version": ""
         },
-        "other": [
+        "others": [
 
         ]
     },
@@ -38,7 +38,7 @@
             "name": "perl",
             "version": ""
         },
-        "other": [
+        "others": [
 
         ]
     },
@@ -47,7 +47,7 @@
             "name": "python",
             "version": "3.6"
         },
-        "other": [
+        "others": [
             {
                 "name": "pypy",
                 "version": "3"
@@ -55,6 +55,10 @@
             {
                 "name": "jython",
                 "version": ""
+            },
+            {
+                "name": "ipython",
+                "version": "3"
             }
 
         ]
@@ -64,7 +68,7 @@
             "name": "ruby",
             "version": ""
         },
-        "other": [
+        "others": [
             {
                 "name": "jruby",
                 "version": ""
@@ -76,7 +80,7 @@
             "name": "sh",
             "version": ""
         },
-        "other": [
+        "others": [
             {
                 "name": "bash",
                 "version": ""
@@ -92,7 +96,7 @@
             "name": "tcl",
             "version": ""
         },
-        "other": [
+        "others": [
             {
                 "name": "tclsh",
                 "version": ""
@@ -104,7 +108,7 @@
             "name": "zsh",
             "version": ""
         },
-        "other": [
+        "others": [
 
         ]
     }

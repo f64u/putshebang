@@ -1,7 +1,7 @@
-include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
+include putshebang/langs.json
 
 recursive-include tests *
 recursive-exclude * __pycache__

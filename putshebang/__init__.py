@@ -15,12 +15,12 @@ __version__ = '0.1.6'
 def shebang(file_name=None, interpreter=None, get_versions=False, get_links=0):
     # type: (str, str, bool, int) -> List[str]
 
-    """Get available shebangs associated with `file_name' or `interpreter'
+    """Get available shebangs associated with `file_name' or `interpreter'.
     :param file_name: the file name to get the extension from
     :param interpreter: forget about the extension and use `lang' as the interpreter name
     :param get_versions: use the regex that matches different versions of the same language
                          Example:
-                            'python': matches => (python, python3, python3.6, python2017.04, python-7., ...)
+                            'python': matches => (python, python3, python3.6, python2017.04, python-7.7, ...)
                             
                          however, if false, if `interpreter' or `the default interpreter' contains a version,
                          you'll receive it
@@ -30,8 +30,9 @@ def shebang(file_name=None, interpreter=None, get_versions=False, get_links=0):
                             exist (no multiple references for the same file))
     :return: list of available shebangs on the system
     """
-    d = ShebangedFile.get_interpreter(file_name, interpreter, get_versions, get_links)
-    all_paths = [str(p) for i in [l.all_paths for l in [d["default"]] + d["other"]] for p in i]
+    d = ShebangedFile.get_extension(file_name=file_name, interpreter=interpreter, get_versions=get_versions,
+                                    get_links=get_links).interpreters
+    all_paths = [str(p) for i in [l.all_paths for l in [d["default"] if d["default"] else []] + d["others"]] for p in i]
 
     return list(map(lambda p: "#!{}".format(p), all_paths))
 

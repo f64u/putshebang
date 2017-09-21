@@ -5,6 +5,7 @@ History
 0.1.6 (2017-09-*)
 -----------------
 * Decorating the output by colors and stuff
+* Some internally added features that are used and will be used in the future extensively
 
 
 0.1.5 (2017-09-15)

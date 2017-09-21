@@ -9,7 +9,6 @@ Contents:
    readme
    installation
    usage
-   modules
    history
 
 Indices and tables
